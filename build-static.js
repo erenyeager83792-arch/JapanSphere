@@ -9,6 +9,6 @@ if (!existsSync('dist')) {
 
 // Build the frontend using Vite
 console.log('Building frontend with Vite...');
-execSync('npx vite build', { stdio: 'inherit' });
+execSync('npx vite build --outDir dist', { stdio: 'inherit' });
 
 console.log('Static build complete! Files are in dist directory.');
