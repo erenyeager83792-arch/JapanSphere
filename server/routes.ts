@@ -22,36 +22,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const systemPrompt = `You are an expert guide on Japan covering culture, history, anime, travel, and language. ${categoryPrompts[category]}. Be precise, informative, and engaging. Always provide accurate information about Japan.`;
       
+      const requestBody = {
+        model: "llama-3.1-sonar-large-128k-online",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user", 
+            content: query
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.2,
+        top_p: 0.9,
+        return_images: false,
+        return_related_questions: false,
+        search_recency_filter: "month",
+        stream: false
+      };
+
+      console.log("Making Perplexity API request:", {
+        url: PERPLEXITY_API_URL,
+        model: requestBody.model,
+        query: query.substring(0, 100) + "..."
+      });
+
       const response = await fetch(PERPLEXITY_API_URL, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt
-            },
-            {
-              role: "user", 
-              content: query
-            }
-          ],
-          max_tokens: 1000,
-          temperature: 0.2,
-          top_p: 0.9,
-          return_images: false,
-          return_related_questions: false,
-          search_recency_filter: "month",
-          stream: false
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error(`Perplexity API error: ${response.statusText}`);
+        const errorBody = await response.text();
+        console.error("Perplexity API error details:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody
+        });
+        throw new Error(`Perplexity API error: ${response.status} ${response.statusText} - ${errorBody}`);
       }
 
       const data = await response.json();
