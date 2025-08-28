@@ -120,39 +120,20 @@ export function SearchInterface() {
             {searchResult && !searchMutation.isPending && (
               <div data-testid="container-search-results">
                 <h3 className="text-lg font-semibold mb-4">Search Results</h3>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-foreground whitespace-pre-wrap" data-testid="text-search-result">
-                    {searchResult.content}
+                <div className="p-6 bg-gradient-to-br from-muted/30 to-muted/60 rounded-lg backdrop-blur-sm border border-white/10">
+                  <p className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-search-result">
+                    {searchResult.content.replace(/\[\d+\]/g, '').trim()}
                   </p>
                   <div className="mt-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2">
                       <span data-testid="text-search-source">
-                        Powered by Perplexity AI - Sonar Model
+                        Powered by AI
                       </span>
                       <span>•</span>
                       <span className="capitalize" data-testid="text-search-category">
                         {searchResult.category}
                       </span>
                     </div>
-                    {searchResult.citations && searchResult.citations.length > 0 && (
-                      <div className="mt-2">
-                        <p className="font-medium mb-1">Sources:</p>
-                        <div className="space-y-1">
-                          {searchResult.citations.map((citation: string, index: number) => (
-                            <a
-                              key={index}
-                              href={citation}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block text-primary hover:underline text-xs break-all"
-                              data-testid={`link-citation-${index}`}
-                            >
-                              {citation}
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

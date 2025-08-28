@@ -1,12 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { SearchInterface } from "@/components/search-interface";
 import { WeatherWidget } from "@/components/weather-widget";
 import { TrendingSection } from "@/components/trending-section";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { X, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Clock, X, AlertCircle } from "lucide-react";
 
 // GSAP animations will be added via useEffect
 declare global {
@@ -17,9 +16,14 @@ declare global {
 }
 
 export default function Home() {
-  const [showNotice, setShowNotice] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    // Update Japan time every second
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
     // Load GSAP dynamically
     const loadGSAP = async () => {
       if (typeof window !== 'undefined') {
@@ -50,66 +54,123 @@ export default function Home() {
           gsap.registerPlugin(window.ScrollTrigger);
         }
         
-        // Page load animation sequence
+        // Enhanced page load animation sequence
         const tl = gsap.timeline();
         
+        // Animated background parallax
+        gsap.to('[data-parallax="background"]', {
+          yPercent: -50,
+          ease: "none",
+          scrollTrigger: {
+            trigger: '[data-parallax="background"]',
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true
+          }
+        });
+
+        // Floating animation for cards
+        gsap.to('.glass-effect', {
+          y: -10,
+          duration: 2,
+          ease: "power1.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.3
+        });
+
+        // Main animation timeline with smoother easing
         tl.from('[data-animate="slideDown"]', {
-          duration: 0.6,
-          y: -50,
+          duration: 1,
+          y: -60,
           opacity: 0,
-          ease: "power2.out"
+          ease: "elastic.out(1, 0.5)"
         })
         .from('[data-animate="fadeIn"]', {
-          duration: 0.8,
+          duration: 1.2,
           opacity: 0,
-          ease: "power2.out"
-        }, "-=0.4")
-        .from('[data-animate="fadeInUp"]', {
-          duration: 1,
-          y: 50,
-          opacity: 0,
-          stagger: 0.2,
-          ease: "power2.out"
+          scale: 0.9,
+          ease: "back.out(1.7)"
         }, "-=0.6")
-        .from('[data-animate="slideInLeft"]', {
-          duration: 0.8,
-          x: -100,
+        .from('[data-animate="fadeInUp"]', {
+          duration: 1.4,
+          y: 80,
           opacity: 0,
-          stagger: 0.2,
-          ease: "power2.out"
+          stagger: 0.3,
+          ease: "back.out(1.4)"
         }, "-=0.8")
-        .from('[data-animate="slideInRight"]', {
-          duration: 0.8,
-          x: 100,
+        .from('[data-animate="slideInLeft"]', {
+          duration: 1.2,
+          x: -120,
           opacity: 0,
-          ease: "power2.out"
-        }, "-=0.6");
+          stagger: 0.25,
+          ease: "back.out(1.2)"
+        }, "-=1.0")
+        .from('[data-animate="slideInRight"]', {
+          duration: 1.2,
+          x: 120,
+          opacity: 0,
+          ease: "back.out(1.2)"
+        }, "-=0.8");
+
+        // Interactive hover animations
+        const cards = document.querySelectorAll('.trending-card, .glass-effect');
+        cards.forEach(card => {
+          card.addEventListener('mouseenter', () => {
+            gsap.to(card, {
+              scale: 1.05,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          });
+          
+          card.addEventListener('mouseleave', () => {
+            gsap.to(card, {
+              scale: 1,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          });
+        });
       }
     };
 
     loadGSAP();
+    
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
+
+  // Format Japan time
+  const japanTime = currentTime.toLocaleString('en-US', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+
+  const japanDate = currentTime.toLocaleDateString('en-US', {
+    timeZone: 'Asia/Tokyo',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
   return (
     <div className="dark min-h-screen">
-      {/* Maintenance Notice */}
-      {showNotice && (
-        <div className="bg-blue-600 text-white text-center py-2 px-4 text-sm relative" data-animate="slideDown">
-          <div className="flex items-center justify-center">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            <span>Notice: Site maintenance is scheduled for July 15 from 2:00-5:00 AM (JST). We apologize for any inconvenience.</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowNotice(false)}
-              className="ml-4 text-blue-200 hover:text-white p-1 h-auto"
-              data-testid="button-dismiss-notice"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      {/* Japan Time Display */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-3 px-4 text-sm relative" data-animate="slideDown">
+        <div className="flex items-center justify-center space-x-3">
+          <Clock className="h-4 w-4" />
+          <span className="font-medium">Japan Time:</span>
+          <span className="font-mono text-base">{japanTime}</span>
+          <span className="text-white/80">•</span>
+          <span className="text-white/90">{japanDate}</span>
         </div>
-      )}
+      </div>
       
       {/* Navigation */}
       <div data-animate="fadeIn">
@@ -124,13 +185,14 @@ export default function Home() {
             <div 
               className="hero-bg absolute inset-0"
               style={{
-                backgroundImage: 'url("https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&h=1080")',
+                backgroundImage: 'url("https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080")',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundAttachment: 'fixed'
               }}
               data-parallax="background"
             />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40"></div>
           </div>
           
           {/* Content Container */}
