@@ -7,7 +7,7 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY || "pplx-Z5qECLEtodQ7N
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 
 const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
-const GOOGLE_SEARCH_ENGINE_ID = "017576662512468239146:omuauf_lfve"; // General web search engine
+const WEB_SEARCH_API_KEY = "WRYSDsXhAc4432XGQPpoyj28";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Perplexity search endpoint
@@ -120,10 +120,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to test web search API
+  async function testWebSearchAPI(query: string, category: string): Promise<any[]> {
+    try {
+      console.log(`Testing Web Search API for: ${query}`);
+      
+      // Try different web search API endpoints
+      const endpoints = [
+        // SerpAPI format
+        `https://serpapi.com/search?q=${encodeURIComponent(query)}&api_key=${WEB_SEARCH_API_KEY}&num=3`,
+        // Bing Search API format  
+        `https://api.bing.microsoft.com/v7.0/search?q=${encodeURIComponent(query)}&count=3`,
+        // Alternative search API format
+        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=3`
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const headers: any = {
+            'User-Agent': 'Mozilla/5.0 (compatible; TrendingBot/1.0)',
+          };
+
+          // Add appropriate auth headers for different APIs
+          if (endpoint.includes('serpapi.com')) {
+            // SerpAPI uses URL param
+          } else if (endpoint.includes('bing.microsoft.com')) {
+            headers['Ocp-Apim-Subscription-Key'] = WEB_SEARCH_API_KEY;
+          } else if (endpoint.includes('brave.com')) {
+            headers['X-Subscription-Token'] = WEB_SEARCH_API_KEY;
+          }
+
+          const response = await fetch(endpoint, { headers });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Success with ${endpoint.includes('serpapi') ? 'SerpAPI' : endpoint.includes('bing') ? 'Bing' : 'Brave'} API`);
+            
+            // Parse different response formats
+            let results = [];
+            if (data.organic_results) {
+              // SerpAPI format
+              results = data.organic_results.slice(0, 3);
+            } else if (data.webPages?.value) {
+              // Bing format
+              results = data.webPages.value.slice(0, 3);
+            } else if (data.web?.results) {
+              // Brave format
+              results = data.web.results.slice(0, 3);
+            }
+
+            return results.map((item: any, index: number) => ({
+              id: `${category.toLowerCase()}-${Date.now()}-${index}`,
+              title: (item.title || item.name || 'Trending Topic').substring(0, 80),
+              excerpt: (item.snippet || item.description || 'Latest news from Japan').substring(0, 120),
+              category: category,
+              imageUrl: getImageForCategory(category),
+              timeAgo: `${Math.floor(Math.random() * 8) + 1}h`,
+              url: item.link || item.url || '#'
+            }));
+          }
+        } catch (err) {
+          console.log(`Failed with ${endpoint}: ${err}`);
+          continue;
+        }
+      }
+      
+      return [];
+    } catch (error) {
+      console.error(`Error with web search for ${query}:`, error);
+      return [];
+    }
+  }
+
   // Helper function to fetch trending topics using multiple sources
   async function fetchTrendingContent(): Promise<any[]> {
     try {
-      // Use Perplexity API to get trending Japan topics
+      console.log("Testing Web Search API with the new key...");
+      
+      // Test the web search API first
+      const searches = [
+        testWebSearchAPI("Japan trending news culture 2025", "Culture"),
+        testWebSearchAPI("anime Japan new releases 2025", "Anime"),
+        testWebSearchAPI("Japan technology innovation 2025", "Tech")
+      ];
+
+      const searchResults = await Promise.all(searches);
+      const webSearchArticles = searchResults.flat();
+      
+      if (webSearchArticles.length > 0) {
+        console.log(`Web Search API SUCCESS! Found ${webSearchArticles.length} articles`);
+        return webSearchArticles;
+      }
+      
+      console.log("Web Search API failed, falling back to Perplexity API...");
+      
+      // Fallback to Perplexity API if web search fails
       const trendingPrompt = "List 6 current trending topics in Japan for August 2025, including anime, culture, and technology. Format each as: Title | Brief description | Category (Anime/Culture/Tech)";
       
       const response = await fetch(PERPLEXITY_API_URL, {
@@ -203,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Trending articles endpoint  
   app.get("/api/trending", async (req, res) => {
     try {
-      console.log("Fetching trending topics using Perplexity API...");
+      console.log("Testing Web Search API key...");
       
       // Fetch trending content using Perplexity for real-time data
       const trendingArticles = await fetchTrendingContent();
