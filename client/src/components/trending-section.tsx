@@ -4,10 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTrending } from "@/hooks/use-trending";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export function TrendingSection() {
   const { data: articles, isLoading, error } = useTrending();
   const [activeFilter, setActiveFilter] = useState("all");
+  const { toast } = useToast();
+
+  // Filter articles based on selected category
+  const filteredArticles = articles?.filter(article => {
+    if (activeFilter === "all") return true;
+    return article.category.toLowerCase() === activeFilter.toLowerCase();
+  });
 
   const filters = [
     { id: "all", label: "All" },
@@ -15,6 +24,33 @@ export function TrendingSection() {
     { id: "anime", label: "Anime" },
     { id: "tech", label: "Tech" }
   ];
+
+  const handleRefresh = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/trending"] });
+      toast({
+        title: "Refreshed!",
+        description: "Trending articles have been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh trending articles.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArticleClick = (article: any) => {
+    if (article.url && article.url !== "#") {
+      window.open(article.url, '_blank');
+    } else {
+      toast({
+        title: article.title,
+        description: article.excerpt,
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -62,7 +98,7 @@ export function TrendingSection() {
   }
 
   return (
-    <div className="glass-effect rounded-xl p-6">
+    <div className="glass-effect rounded-xl p-6" data-testid="trending-section">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold flex items-center">
           <Flame className="text-red-500 h-5 w-5 mr-2" />
@@ -74,6 +110,7 @@ export function TrendingSection() {
         <Button 
           variant="ghost" 
           size="sm"
+          onClick={handleRefresh}
           className="text-muted-foreground hover:text-foreground p-2"
           data-testid="button-refresh-trending"
         >
@@ -99,9 +136,10 @@ export function TrendingSection() {
       
       {/* Trending Articles */}
       <div className="space-y-4">
-        {articles?.map((article, index) => (
+        {filteredArticles?.map((article, index) => (
           <article 
             key={article.id}
+            onClick={() => handleArticleClick(article)}
             className="trending-card bg-card rounded-lg p-4 border border-border cursor-pointer group hover:border-primary/20 transition-all"
             data-testid={`card-article-${article.id}`}
           >

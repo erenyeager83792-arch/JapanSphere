@@ -1,9 +1,51 @@
 import { useState } from "react";
 import { Menu, X, MessageCircle, User, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handlePopularClick = () => {
+    toast({
+      title: "Popular Content",
+      description: "Discover the most popular Japan topics, trending anime, cultural highlights, and viral content from the community.",
+    });
+    // Scroll to trending section
+    const trendingSection = document.querySelector('[data-testid="trending-section"]');
+    if (trendingSection) {
+      trendingSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleCommunityClick = () => {
+    toast({
+      title: "Community Features",
+      description: "Connect with fellow Japan enthusiasts, share experiences, and join discussions about Japanese culture, anime, and travel.",
+    });
+  };
+
+  const handleChatClick = () => {
+    toast({
+      title: "AI Chat Assistant",
+      description: "Start a conversation with our Japan expert AI! Ask anything about culture, language, travel, or anime.",
+    });
+  };
+
+  const handleAccountClick = () => {
+    toast({
+      title: "Account Features",
+      description: "Sign in to save your favorite searches, bookmark articles, and personalize your Japan discovery experience.",
+    });
+  };
+
+  const handleLanguageClick = () => {
+    toast({
+      title: "Language Settings",
+      description: "Switch between English and Japanese language modes. Currently viewing in English.",
+    });
+  };
 
   return (
     <nav className="relative z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -18,20 +60,20 @@ export function Navigation() {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a 
-              href="#" 
-              className="text-foreground hover:text-primary transition-colors"
+            <button 
+              onClick={handlePopularClick}
+              className="text-foreground hover:text-primary transition-colors cursor-pointer"
               data-testid="link-popular"
             >
               Popular
-            </a>
-            <a 
-              href="#" 
-              className="text-foreground hover:text-primary transition-colors"
+            </button>
+            <button 
+              onClick={handleCommunityClick}
+              className="text-foreground hover:text-primary transition-colors cursor-pointer"
               data-testid="link-community"
             >
               Community
-            </a>
+            </button>
           </div>
           
           {/* Right Side Actions */}
@@ -39,6 +81,7 @@ export function Navigation() {
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={handleChatClick}
               className="flex items-center space-x-2"
               data-testid="button-chat"
             >
@@ -49,6 +92,7 @@ export function Navigation() {
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={handleAccountClick}
               className="flex items-center space-x-2"
               data-testid="button-account"
             >
@@ -59,6 +103,7 @@ export function Navigation() {
             <Button 
               variant="ghost" 
               size="sm" 
+              onClick={handleLanguageClick}
               className="flex items-center space-x-1"
               data-testid="button-language"
             >
@@ -83,20 +128,20 @@ export function Navigation() {
         {isMenuOpen && (
           <div className="md:hidden bg-card border-t border-border p-4">
             <div className="flex flex-col space-y-4">
-              <a 
-                href="#" 
-                className="text-foreground hover:text-primary transition-colors"
+              <button 
+                onClick={handlePopularClick}
+                className="text-foreground hover:text-primary transition-colors cursor-pointer text-left"
                 data-testid="link-popular-mobile"
               >
                 Popular
-              </a>
-              <a 
-                href="#" 
-                className="text-foreground hover:text-primary transition-colors"
+              </button>
+              <button 
+                onClick={handleCommunityClick}
+                className="text-foreground hover:text-primary transition-colors cursor-pointer text-left"
                 data-testid="link-community-mobile"
               >
                 Community
-              </a>
+              </button>
             </div>
           </div>
         )}
