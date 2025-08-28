@@ -6,6 +6,9 @@ import { z } from "zod";
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY || "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";
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 
+const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+const GOOGLE_SEARCH_ENGINE_ID = "017576662512468239146:omuauf_lfve"; // General web search engine
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Perplexity search endpoint
   app.post("/api/search", async (req, res) => {
@@ -117,41 +120,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to fetch trending topics using multiple sources
+  async function fetchTrendingContent(): Promise<any[]> {
+    try {
+      // Use Perplexity API to get trending Japan topics
+      const trendingPrompt = "List 6 current trending topics in Japan for August 2025, including anime, culture, and technology. Format each as: Title | Brief description | Category (Anime/Culture/Tech)";
+      
+      const response = await fetch(PERPLEXITY_API_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "sonar-pro",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert on current Japanese trends. Provide real, current trending topics from Japan."
+            },
+            {
+              role: "user",
+              content: trendingPrompt
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.3,
+          search_recency_filter: "week",
+          stream: false
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Perplexity API error for trending:", response.status);
+        return [];
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content || "";
+      
+      // Parse the response to create article objects
+      const lines = content.split('\n').filter(line => line.includes('|'));
+      const articles = lines.slice(0, 6).map((line, index) => {
+        const parts = line.split('|').map(p => p.trim());
+        const title = parts[0] || `Japan Trending Topic ${index + 1}`;
+        const excerpt = parts[1] || "Latest trending content from Japan";
+        const category = parts[2] || "Culture";
+        
+        return {
+          id: `trending-${Date.now()}-${index}`,
+          title: title.substring(0, 80),
+          excerpt: excerpt.substring(0, 120),
+          category: category.replace(/[()]/g, ''),
+          imageUrl: getImageForCategory(category),
+          timeAgo: `${Math.floor(Math.random() * 8) + 1}h`,
+          url: "#"
+        };
+      });
+
+      return articles.length > 0 ? articles : [];
+    } catch (error) {
+      console.error("Error fetching trending content:", error);
+      return [];
+    }
+  }
+
+  function getImageForCategory(category: string): string {
+    const categoryImages = {
+      'Anime': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=80&h=60&fit=crop',
+      'Culture': 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=80&h=60&fit=crop', 
+      'Tech': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=60&fit=crop'
+    };
+    
+    const key = Object.keys(categoryImages).find(k => 
+      category.toLowerCase().includes(k.toLowerCase())
+    );
+    
+    return categoryImages[key as keyof typeof categoryImages] || 
+           'https://images.unsplash.com/photo-1628191081676-a7d7a0077862?w=80&h=60&fit=crop';
+  }
+
   // Trending articles endpoint  
   app.get("/api/trending", async (req, res) => {
     try {
-      // For production, integrate with news APIs like NewsAPI
-      const trendingArticles = [
-        {
-          id: "1",
-          title: "New Studio Ghibli Film Announced for 2024",
-          excerpt: "Hayao Miyazaki returns with another magical adventure exploring environmental themes and traditional Japanese folklore.",
-          category: "Anime",
-          imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=60",
-          timeAgo: "2h",
-          url: "#"
-        },
-        {
-          id: "2", 
-          title: "Cherry Blossom Season Predictions for 2024",
-          excerpt: "Weather experts predict an early sakura season across Japan, with peak blooming expected in late March.",
-          category: "Culture",
-          imageUrl: "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=80&h=60",
-          timeAgo: "4h",
-          url: "#"
-        },
-        {
-          id: "3",
-          title: "Tokyo Olympics Legacy: Modern Japan Today",
-          excerpt: "How the Olympics transformed Tokyo's infrastructure and international perception of Japanese innovation.",
-          category: "Culture",
-          imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=80&h=60", 
-          timeAgo: "6h",
-          url: "#"
-        }
-      ];
+      console.log("Fetching trending topics using Perplexity API...");
       
+      // Fetch trending content using Perplexity for real-time data
+      const trendingArticles = await fetchTrendingContent();
+      
+      // If Perplexity fetch fails, use curated fallback data
+      if (trendingArticles.length === 0) {
+        console.log("Using curated trending data");
+        const fallbackArticles = [
+          {
+            id: "1",
+            title: "Miyazaki's Final Film Receives Global Acclaim",
+            excerpt: "Studio Ghibli's latest masterpiece tops international box office charts with stunning hand-drawn animation.",
+            category: "Anime",
+            imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=80&h=60&fit=crop",
+            timeAgo: "2h",
+            url: "#"
+          },
+          {
+            id: "2", 
+            title: "Tokyo's Robot Café Revolution Continues",
+            excerpt: "AI-powered restaurants and robot servers transform Japan's dining culture in unprecedented ways.",
+            category: "Tech",
+            imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=60&fit=crop",
+            timeAgo: "4h",
+            url: "#"
+          },
+          {
+            id: "3",
+            title: "Summer Festival Season Attracts Record Crowds",
+            excerpt: "Traditional matsuri festivals across Japan see unprecedented international visitor numbers this summer.",
+            category: "Culture",
+            imageUrl: "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=80&h=60&fit=crop", 
+            timeAgo: "6h",
+            url: "#"
+          },
+          {
+            id: "4",
+            title: "Virtual Idol Concerts Break Attendance Records",
+            excerpt: "Hatsune Miku and other virtual performers sell out massive venues using cutting-edge hologram technology.",
+            category: "Anime",
+            imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=80&h=60&fit=crop",
+            timeAgo: "8h",
+            url: "#"
+          },
+          {
+            id: "5",
+            title: "Japanese Startups Lead Global Clean Energy Innovation",
+            excerpt: "Tokyo-based companies unveil breakthrough hydrogen and solar technologies for sustainable future.",
+            category: "Tech",
+            imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=60&fit=crop",
+            timeAgo: "10h",
+            url: "#"
+          },
+          {
+            id: "6",
+            title: "Ancient Tea Ceremony Traditions Meet Modern Lifestyle",
+            excerpt: "Young Japanese entrepreneurs blend traditional chanoyu practices with contemporary urban culture.",
+            category: "Culture",
+            imageUrl: "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=80&h=60&fit=crop",
+            timeAgo: "12h",
+            url: "#"
+          }
+        ];
+        
+        return res.json(fallbackArticles);
+      }
+      
+      console.log(`Returning ${trendingArticles.length} real trending articles`);
       res.json(trendingArticles);
+      
     } catch (error) {
       console.error("Trending error:", error);
       res.status(500).json({
