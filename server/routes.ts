@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const systemPrompt = `You are an expert guide on Japan covering culture, history, anime, travel, and language. ${categoryPrompts[category]}. Be precise, informative, and engaging. Always provide accurate information about Japan.`;
       
       const requestBody = {
-        model: "llama-3.1-sonar-large-128k-online",
+        model: "sonar-pro",
         messages: [
           {
             role: "system",
