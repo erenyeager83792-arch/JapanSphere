@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(220, 25%, 8%);
+  --foreground: hsl(0, 0%, 95%);
+  --card: hsl(220, 15%, 15%);
+  --card-foreground: hsl(0, 0%, 90%);
+  --popover: hsl(220, 15%, 15%);
+  --popover-foreground: hsl(0, 0%, 90%);
+  --primary: hsl(270, 70%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(220, 70%, 55%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(220, 15%, 20%);
+  --muted-foreground: hsl(0, 0%, 70%);
+  --accent: hsl(270, 50%, 50%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 70%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(220, 15%, 25%);
+  --input: hsl(220, 15%, 18%);
+  --ring: hsl(270, 70%, 60%);
+  --radius: 0.75rem;
+  --font-sans: Inter, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+}
+
+.dark {
+  --background: hsl(220, 25%, 8%);
+  --foreground: hsl(0, 0%, 95%);
+  --card: hsl(220, 15%, 15%);
+  --card-foreground: hsl(0, 0%, 90%);
+  --popover: hsl(220, 15%, 15%);
+  --popover-foreground: hsl(0, 0%, 90%);
+  --primary: hsl(270, 70%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(220, 70%, 55%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(220, 15%, 20%);
+  --muted-foreground: hsl(0, 0%, 70%);
+  --accent: hsl(270, 50%, 50%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 70%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(220, 15%, 25%);
+  --input: hsl(220, 15%, 18%);
+  --ring: hsl(270, 70%, 60%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(220, 25%, 8%) 0%, hsl(220, 20%, 12%) 100%);
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+  
+  .hero-bg {
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
+  }
+  
+  .search-glow {
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .search-glow:focus-within {
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+  }
+  
+  .trending-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .trending-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+}
