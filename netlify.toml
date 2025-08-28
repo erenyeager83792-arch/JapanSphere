@@ -1,5 +1,5 @@
 [build]
-  publish = "dist"
+  publish = "dist/public"
   command = "npm run build"
   functions = "netlify/functions"
 
@@ -19,4 +19,4 @@
 [dev]
   command = "npm run dev"
   port = 5000
-  publish = "dist"
+  publish = "dist/public"
